@@ -1,16 +1,33 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import {getCitedPaper} from "@/service/paperService";
 
 const router = useRouter()
-const citedPaper = ref([
-    "Artificial Intelligence: A Modern Approach. Pearson Education Limited.",
-    "The future of employment: How susceptible are jobs to computerisation? Technological Forecasting and Social Change.",
-    "Why are there still so many jobs? The history and future of workplace automation."
-])
+const route = useRoute()
+const citedPaper = ref<Paper[]>([])
+const isLoading = ref(true);
+
+type Paper = {
+  id: number,
+  title: string
+}
+
+onMounted(() => {
+  const paperId = parseInt(route.query.paperId as string)
+  getCitedPaper(paperId).then(res => {
+    console.log(res)
+    citedPaper.value = res.data.cites
+    isLoading.value = false
+  })
+})
 
 const goBack = () => {
     router.back()
+}
+
+const goPaper = (paperId: number) => {
+  router.push({ name: 'Paper', query: { paperId: paperId } })
 }
 </script>
 
@@ -22,9 +39,12 @@ const goBack = () => {
     <div class="title">
       Cited Paper
     </div>
+    <div class="loading-container" v-if="isLoading">
+      Loading...
+    </div>
     <div class="paper-list">
-      <div v-for="(paper, index) in citedPaper" :key="index" class="paper-item">
-        {{ paper }}
+      <div v-for="(paper, index) in citedPaper" :key="index" class="paper-item" @click="goPaper(paper.id)">
+        {{ paper.title }}
       </div>
     </div>
   </div>
@@ -65,6 +85,10 @@ const goBack = () => {
     color: #fff;
     width: 70%;
   }
+  .loading-container {
+    font-size: 24px;
+    color: #fff;
+  }
   .paper-list {
     width: 70%;
     height: 90%;
@@ -72,7 +96,6 @@ const goBack = () => {
     align-items: flex-start;
     justify-content: flex-start;
     flex-direction: column;
-    margin-top: 20px;
     overflow-y: scroll;
     -ms-overflow-style: none;
     scrollbar-width: none;

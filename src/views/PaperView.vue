@@ -1,13 +1,65 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-const title = ref('Exploring the Impact of Artificial Intelligence on Modern Workforce: A Comprehensive Analysis');
-const abstract = ref('The rapid advancement of artificial intelligence (AI) technologies has led to significant transformations in various sectors, with the modern workforce being no exception. This paper provides a comprehensive analysis of the impact of AI on the contemporary workforce, examining both the challenges and opportunities it presents. The study begins by reviewing the current state of AI technologies and their integration into different industries. It then delves into the effects of AI on job displacement, skill requirements, and the nature of work itself. The paper identifies key areas where AI is likely to create new job opportunities, such as data analysis, machine learning, and automation. Additionally, it discusses the potential for AI to enhance productivity and efficiency in the workplace. The challenges posed by AI, including ethical considerations, job security concerns, and the need for a skilled workforce, are also addressed. The paper concludes with a set of recommendations for policymakers, educators, and industry leaders to harness the benefits of AI while mitigating its negative impacts on the modern workforce. This research aims to contribute to a deeper understanding of the evolving relationship between AI and the workforce, informing strategies for a sustainable and inclusive future.\n')
-const isVIP = ref(false);
-import { useRouter } from 'vue-router';
-const router = useRouter();
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { getPaperBase} from "@/service/paperService";
+import { isVIP } from "@/service/userService";
+import { ElMessage } from 'element-plus';
 
+const router = useRouter();
+const route = useRoute();
+
+const VIP = ref(false);
+const isLoading = ref(true);
+
+const title = ref('Loading...');
+const abstract = ref('')
+const category = ref('');
 const goBack = () => {
   router.back();
+}
+
+onMounted(() => {
+  VIP.value = sessionStorage.getItem('isVIP') == 'true';
+  const paperId = parseInt(route.query.paperId as string, 10);
+  isVIP(parseInt(sessionStorage.getItem('userId') as string, 10)).then(res => {
+    VIP.value = res.data;
+    sessionStorage.setItem('isVIP', res.data.toString());
+  })
+  getPaperBase(paperId).then(res => {
+    title.value = res.data.title;
+    abstract.value = res.data.abstract;
+    category.value = res.data.category;
+    isLoading.value = false;
+  })
+})
+
+const switchToCitedPapers = () => {
+  if(isLoading.value){
+    return;
+  }
+  router.push({name: 'CitedPapers', query: {paperId: route.query.paperId}});
+}
+
+const switchToHomogeneousPapers = () => {
+  if(isLoading.value){
+    return;
+  }
+  if(!VIP.value){
+    ElMessage('You need to be a VIP member to access this feature.');
+    return;
+  }
+  router.push({name: 'HomogeneousPapers', query: {paperId: route.query.paperId}});
+}
+
+const switchToSimilarPapers = () => {
+  if(isLoading.value){
+    return;
+  }
+  if(!VIP.value){
+    ElMessage('You need to be a VIP member to access this feature.');
+    return;
+  }
+  router.push({name: 'SimilarPapers', query: {paperId: route.query.paperId}});
 }
 </script>
 
@@ -24,20 +76,20 @@ const goBack = () => {
     <div class="abstract">
       {{ abstract }}
     </div>
-    <div class="category">
-      Category: AI and Workforce
+    <div class="category" v-if="!isLoading">
+      Category: {{ category }}
     </div>
     <div class="btn-group">
-      <div class="available-btn" @click="router.push('/citedPapers')">
+      <div class="available-btn" @click="switchToCitedPapers">
         View Cited Paper
       </div>
-      <div :class="isVIP? 'available-btn' : 'pro-btn'">
+      <div :class="VIP? 'available-btn' : 'pro-btn'" @click="switchToHomogeneousPapers">
         View Homogeneous Paper
-        <span class="pro-tag" v-if="!isVIP">Pro</span>
+        <span class="pro-tag" v-if="!VIP">Pro</span>
       </div>
-      <div :class="isVIP? 'available-btn' : 'pro-btn'">
+      <div :class="VIP? 'available-btn' : 'pro-btn'" @click="switchToSimilarPapers">
         View Similar Paper
-        <span class="pro-tag" v-if="!isVIP">Pro</span>
+        <span class="pro-tag" v-if="!VIP">Pro</span>
       </div>
     </div>
   </div>
@@ -81,12 +133,13 @@ const goBack = () => {
   .abstract {
     font-size: 18px;
     line-height: 1.5;
-    color: #fff;
+    color: #ccc;
     width: 70%;
   }
   .category {
-    font-size: 18px;
-    color: #ccc;
+    font-size: 20px;
+    color: #fff;
+    font-weight: bold;
     margin-top: 20px;
     margin-bottom: 30px;
     width: 70%;

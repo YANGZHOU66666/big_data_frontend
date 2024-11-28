@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { ElMessage } from 'element-plus';
+import { register } from '@/service/userService'
+import { useRouter } from 'vue-router'
+const router = useRouter();
 
 const email = ref('');
 const password = ref('');
@@ -7,6 +11,48 @@ const confirmPassword = ref('');
 const passwordNotMatch = computed(() => {
   return confirmPassword.value!= '' && password.value!== confirmPassword.value;
 });
+
+const hasEmptyFields = computed(() => {
+     return email.value === '' || password.value === '' || confirmPassword.value === '';
+})
+
+const isValidEmail = (email: string)=>{
+  const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+  return regex.test(email);
+}
+
+const resetFields = () => {
+  email.value = '';
+  password.value = '';
+  confirmPassword.value = '';
+}
+
+const handleRegister = () => {
+  if (hasEmptyFields.value) {
+    ElMessage.error('Please fill in all fields');
+    return;
+  }
+  if (!isValidEmail(email.value)) {
+    ElMessage.error('Invalid Email');
+    return;
+  }
+  if (passwordNotMatch.value) {
+    ElMessage.error('Password Not Match');
+    return;
+  }
+  register(email.value, password.value).then((res) => {
+    console.log(res);
+    if (res.status === 200){
+      ElMessage.success('Successfully Registered. Please Log In');
+      resetFields();
+      router.push('/login');
+    }
+  }).catch((err) => {
+    if(err.response.data.message=="该邮箱已被注册"){
+      ElMessage.error("This email has already been registered. Please use a different email.");
+    }
+  })
+}
 </script>
 
 <template>
@@ -26,7 +72,7 @@ const passwordNotMatch = computed(() => {
             Sign Up
           </div>
           <div class="content">
-            Email Address:
+            Email Address: <span v-if="email.length > 0&&!isValidEmail(email)" style="color:red;margin-left:5px"> Invalid Email</span>
           </div>
           <el-input v-model="email" placeholder="Email Address" size="large" clearable/>
           <div class="content">
@@ -41,7 +87,7 @@ const passwordNotMatch = computed(() => {
             Password Not Match
           </div>
         </div>
-        <div class="btn">
+        <div class="btn" @click="handleRegister">
           Create Account
         </div>
       </div>

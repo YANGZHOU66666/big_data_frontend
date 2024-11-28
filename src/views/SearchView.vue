@@ -1,29 +1,33 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import {searchPaper} from "@/service/paperService";
 
 const router = useRouter()
+
+type Paper = {
+  id: number,
+  title: string
+}
 
 const searchText = ref('')
 const afterSearch = ref(false)
 
-const paperList = ref(["Exploring the Impact of Artificial Intelligence on Modern Workforce: A Comprehensive Analysis",
-"Sustainable Urban Development: Strategies for Reducing Carbon Footprint in Metropolitan Areas",
-"The Role of Social Media in Shaping Public Opinion: A Case Study Approach",
-"Innovative Approaches to Enhancing Renewable Energy Integration in Power Systems",
-"The Effects of Climate Change on Biodiversity: Patterns and Predictions",
-"The Role of Social Media in Shaping Public Opinion: A Case Study Approach",
-"Innovative Approaches to Enhancing Renewable Energy Integration in Power Systems",
-"The Effects of Climate Change on Biodiversity: Patterns and Predictions",
-"Sustainable Urban Development: Strategies for Reducing Carbon Footprint in Metropolitan Areas",
-"Exploring the Impact of Artificial Intelligence on Modern Workforce: A Comprehensive Analysis",
-"The Role of Social Media in Shaping Public Opinion: A Case Study Approach"]);
+const paperList = ref<Paper[]>([]);
+
+const isLoading = ref(false)
 
 const search = ()=>{
   if(searchText.value.trim() === ''){
     afterSearch.value = false;
     return;
   }
+  isLoading.value = true;
+  paperList.value = []
+  searchPaper(searchText.value).then(res=>{
+    paperList.value = res.data
+    isLoading.value = false;
+  })
   //这里应该有请求
   afterSearch.value = true
 }
@@ -52,12 +56,15 @@ const search = ()=>{
             Start typing in the search bar to get started.
           </div>
         </div>
-        <div class="no-result-text" v-if="afterSearch && paperList.length === 0">
+        <div class="no-result-text" v-if="(!isLoading) && afterSearch && paperList.length === 0">
           No Results Found.
         </div>
+        <div class="searching-text" v-if="isLoading">
+          Loading...
+        </div>
         <div class="paper-list" v-if="afterSearch">
-          <div class="paper-item" v-for="paper in paperList" @click="router.push('/paper')">
-            {{ paper }}
+          <div class="paper-item" v-for="paper in paperList" @click="router.push({name: 'Paper', query: {paperId: paper.id}})">
+            {{ paper.title }}
           </div>
         </div>
       </div>
@@ -66,6 +73,15 @@ const search = ()=>{
 </template>
 
 <style scoped>
+@keyframes blink {
+  0%, 100% {
+    color: #fff; /* 默认颜色 */
+  }
+  50% {
+    color: #888; /* 闪烁时的颜色 */
+  }
+}
+
 .page-container {
   display: flex;
   flex-direction: column;
@@ -119,6 +135,7 @@ const search = ()=>{
         position: absolute;
         right: 5px;
         top: 0;
+        user-select: none;
         /*background-color: rgb(4,4,25);*/
         background: linear-gradient(to right, #EE82EE, #00D1FF);
 
@@ -188,6 +205,15 @@ const search = ()=>{
           width: 100%;
           border-radius: 10px;
         }
+      }
+      .no-result-text {
+        font-size: 24px;
+        margin-top: 20px;
+      }
+      .searching-text {
+        font-size: 24px;
+        margin-top: 20px;
+        animation: blink 1s linear infinite; /* 持续时间1秒，线性变化，无限次循环 */
       }
     }
   }

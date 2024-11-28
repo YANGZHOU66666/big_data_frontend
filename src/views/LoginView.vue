@@ -1,17 +1,48 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import {login,isVIP} from "@/service/userService";
+import { ElMessage } from 'element-plus';
 
 const router = useRouter();
 
 const email = ref('');
 const password = ref('');
 
-const login = () => {
-  // TODO: implement login logic
-  console.log('login');
-  sessionStorage.setItem('token','fake-token');
-  router.push({name: 'Search'});
+const hasEmptyFields = () => {
+     return email.value.trim() === '' || password.value.trim() === '';
+}
+
+const handleLogin = () => {
+  if(hasEmptyFields()){
+    ElMessage.error("Please fill in all fields.")
+    return;
+  }
+  if(!isValidEmail(email.value)){
+    ElMessage.error('Invalid Email');
+    return;
+  }
+  login(email.value, password.value).then(res=>{
+    if(res.status === 200) {
+      ElMessage.success("Login success.");
+      sessionStorage.setItem('token', res.data.token);
+      sessionStorage.setItem('userId', res.data.userId);
+      isVIP(res.data.userId).then(res=> {
+        if (res.data) {
+          sessionStorage.setItem("isVIP", "true");
+        }
+      }).finally(()=>{
+        router.push({name: 'Search'});
+      })
+    }
+  }).catch(err=>{
+    ElMessage.error("Login failed, please check your email or password.");
+  })
+}
+
+const isValidEmail = (email: string)=>{
+  const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+  return regex.test(email);
 }
 </script>
 
@@ -32,7 +63,7 @@ const login = () => {
             Log In
           </div>
           <div class="content">
-            Email Address:
+            Email Address: <span v-if="email.length > 0&&!isValidEmail(email)" style="color:red;margin-left:5px"> Invalid Email</span>
           </div>
           <el-input v-model="email" placeholder="Email Address" size="large" clearable/>
           <div class="content">
@@ -40,7 +71,7 @@ const login = () => {
           </div>
           <el-input placeholder="Password" size="large" type="password" v-model="password" clearable/>
         </div>
-        <div class="btn" @click="login">
+        <div class="btn" @click="handleLogin">
           GO
         </div>
       </div>

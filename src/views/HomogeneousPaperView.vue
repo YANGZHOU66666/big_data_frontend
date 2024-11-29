@@ -58,6 +58,14 @@ const noResult = () => {
 </template>
 
 <style scoped>
+@keyframes blink {
+  0%, 100% {
+    color: #fff; /* 默认颜色 */
+  }
+  50% {
+    color: #888; /* 闪烁时的颜色 */
+  }
+}
 .paper-view {
   padding: 30px;
   display: flex;
@@ -95,6 +103,7 @@ const noResult = () => {
   .loading-container {
     font-size: 24px;
     color: #fff;
+    animation: blink 1s infinite;
   }
   .no-result-container {
     font-size: 24px;

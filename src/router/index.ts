@@ -52,6 +52,13 @@ router.beforeEach((to, from, next) => {
   if (to.name === 'Login' || to.name === 'Register') {
     next()
   } else if (token) {
+    if(to.name == 'SimilarPapers'||to.name == 'HomogeneousPapers'){
+      if(sessionStorage.getItem('isVIP')=='true'){
+        next()
+      }else{
+        next('/search')
+      }
+    }
     next()
   } else {
     next('/login')

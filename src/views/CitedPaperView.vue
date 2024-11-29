@@ -29,6 +29,9 @@ const goBack = () => {
 const goPaper = (paperId: number) => {
   router.push({ name: 'Paper', query: { paperId: paperId } })
 }
+const noResult = () => {
+  return citedPaper.value.length === 0
+}
 </script>
 
 <template>
@@ -42,6 +45,9 @@ const goPaper = (paperId: number) => {
     <div class="loading-container" v-if="isLoading">
       Loading...
     </div>
+    <div class="no-result-container" v-if="(!isLoading)&&noResult()">
+      No result
+    </div>
     <div class="paper-list">
       <div v-for="(paper, index) in citedPaper" :key="index" class="paper-item" @click="goPaper(paper.id)">
         {{ paper.title }}
@@ -51,6 +57,14 @@ const goPaper = (paperId: number) => {
 </template>
 
 <style scoped>
+@keyframes blink {
+  0%, 100% {
+    color: #fff; /* 默认颜色 */
+  }
+  50% {
+    color: #888; /* 闪烁时的颜色 */
+  }
+}
 .paper-view {
   padding: 30px;
   display: flex;
@@ -88,6 +102,11 @@ const goPaper = (paperId: number) => {
   .loading-container {
     font-size: 24px;
     color: #fff;
+    animation: blink 1s infinite;
+  }
+  .no-result-container {
+    font-size: 24px;
+    color: #ccc;
   }
   .paper-list {
     width: 70%;

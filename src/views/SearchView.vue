@@ -209,6 +209,7 @@ const search = ()=>{
       .no-result-text {
         font-size: 24px;
         margin-top: 20px;
+        color: #ccc;
       }
       .searching-text {
         font-size: 24px;

@@ -96,6 +96,7 @@ const switchToSimilarPapers = () => {
 </template>
 
 <style scoped>
+
 .paper-view {
   padding: 30px;
   display: flex;
@@ -172,7 +173,6 @@ const switchToSimilarPapers = () => {
       color: #888;
       padding: 10px 20px;
       border-radius: 5px;
-      cursor: pointer;
       width: 30%;
       text-align: center;
       border: 1px solid #888;
